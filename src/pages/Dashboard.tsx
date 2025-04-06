@@ -5,7 +5,8 @@ import CertificateUploader from "@/components/CertificateUploader";
 import CertificateCard, { Certificate } from "@/components/CertificateCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Upload, Award } from "lucide-react";
+import { Shield, Upload, Award, ChartPie, Calendar, Link as LinkIcon, Download } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 // Mock data
 const mockCertificates: Certificate[] = [
@@ -38,12 +39,41 @@ const mockCertificates: Certificate[] = [
     isVerified: false,
     category: "Design"
   },
+  {
+    id: "4",
+    title: "AWS Certified Solutions Architect",
+    issuer: "Amazon Web Services",
+    issueDate: "Feb 2023",
+    imageUrl: "/placeholder.svg",
+    verificationUrl: "https://example.com/verify/789",
+    isVerified: true,
+    category: "Cloud Computing"
+  },
+  {
+    id: "5",
+    title: "Cybersecurity Fundamentals",
+    issuer: "edX",
+    issueDate: "Apr 2023",
+    imageUrl: "/placeholder.svg",
+    isVerified: false,
+    category: "Security"
+  },
+];
+
+// Activity data
+const recentActivity = [
+  { id: 1, action: "Certificate uploaded", date: "Today, 10:30 AM" },
+  { id: 2, action: "Certificate verified", date: "Yesterday, 2:45 PM" },
+  { id: 3, action: "Profile viewed by recruiter", date: "Apr 4, 2025" },
+  { id: 4, action: "Shared profile link", date: "Apr 2, 2025" },
 ];
 
 const Dashboard = () => {
   const [showUploader, setShowUploader] = useState(false);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [shareUrl, setShareUrl] = useState("https://certvault.io/profile/johndoe");
 
   useEffect(() => {
     // Simulate loading data
@@ -57,6 +87,24 @@ const Dashboard = () => {
 
   const toggleUploader = () => {
     setShowUploader(!showUploader);
+  };
+
+  const handleCategoryFilter = (category: string | null) => {
+    setActiveCategory(category);
+  };
+
+  const filteredCertificates = activeCategory
+    ? certificates.filter(cert => cert.category === activeCategory)
+    : certificates;
+
+  const categories = Array.from(new Set(certificates.map(cert => cert.category)));
+
+  const handleShareProfile = () => {
+    navigator.clipboard.writeText(shareUrl);
+    toast({
+      title: "Link copied to clipboard",
+      description: "You can now share your certificate profile with others.",
+    });
   };
 
   return (
@@ -98,16 +146,69 @@ const Dashboard = () => {
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pending Verification</p>
-                  <h3 className="text-3xl font-bold">
-                    {certificates.filter(cert => !cert.isVerified).length}
-                  </h3>
+                  <p className="text-sm font-medium text-muted-foreground">Profile Views</p>
+                  <h3 className="text-3xl font-bold">24</h3>
+                  <p className="text-xs text-green-600 mt-1">↑ 12% this week</p>
                 </div>
-                <Upload className="h-10 w-10 text-muted-foreground/30" />
+                <ChartPie className="h-10 w-10 text-muted-foreground/30" />
               </div>
             </div>
           </div>
 
+          {/* Quick Actions */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
+            <h2 className="text-lg font-medium mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <Button 
+                variant="outline" 
+                className="flex flex-col h-auto py-4 gap-2" 
+                onClick={toggleUploader}
+              >
+                <Upload size={20} />
+                <span>Upload Certificate</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="flex flex-col h-auto py-4 gap-2"
+                onClick={handleShareProfile}
+              >
+                <LinkIcon size={20} />
+                <span>Share Profile</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="flex flex-col h-auto py-4 gap-2"
+              >
+                <Download size={20} />
+                <span>Download All</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="flex flex-col h-auto py-4 gap-2"
+              >
+                <Calendar size={20} />
+                <span>Schedule Reminder</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
+            <h2 className="text-lg font-medium mb-4">Recent Activity</h2>
+            <div className="space-y-4">
+              {recentActivity.map(activity => (
+                <div key={activity.id} className="flex justify-between items-center border-b pb-3 last:border-0">
+                  <span>{activity.action}</span>
+                  <span className="text-sm text-muted-foreground">{activity.date}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Certificates */}
           <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
               <h2 className="text-xl font-bold">My Certificates</h2>
@@ -121,6 +222,27 @@ const Dashboard = () => {
                 <CertificateUploader />
               </div>
             ) : null}
+            
+            {/* Categories filter */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              <Button 
+                variant={activeCategory === null ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleCategoryFilter(null)}
+              >
+                All
+              </Button>
+              {categories.map(category => (
+                <Button 
+                  key={category}
+                  variant={activeCategory === category ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleCategoryFilter(category)}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
 
             <Tabs defaultValue="all">
               <TabsList className="mb-6">
@@ -136,22 +258,22 @@ const Dashboard = () => {
                       <div key={i} className="h-60 bg-gray-100 animate-pulse rounded-lg"></div>
                     ))}
                   </div>
-                ) : certificates.length > 0 ? (
+                ) : filteredCertificates.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {certificates.map(certificate => (
+                    {filteredCertificates.map(certificate => (
                       <CertificateCard key={certificate.id} certificate={certificate} />
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground">No certificates uploaded yet</p>
+                    <p className="text-muted-foreground">No certificates found for this filter</p>
                   </div>
                 )}
               </TabsContent>
 
               <TabsContent value="verified">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {certificates
+                  {filteredCertificates
                     .filter(cert => cert.isVerified)
                     .map(certificate => (
                       <CertificateCard key={certificate.id} certificate={certificate} />
@@ -161,7 +283,7 @@ const Dashboard = () => {
 
               <TabsContent value="pending">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {certificates
+                  {filteredCertificates
                     .filter(cert => !cert.isVerified)
                     .map(certificate => (
                       <CertificateCard key={certificate.id} certificate={certificate} />
