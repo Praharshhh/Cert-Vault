@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -42,24 +41,23 @@ const Signup = () => {
 
     setIsLoading(true);
     
-    // Simulate signup process
     try {
       // Here you would normally call an authentication API
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
-        title: "Success",
-        description: "Your account has been created!",
+        title: "Account Created",
+        description: "A verification code has been sent to your email",
       });
       
-      navigate("/dashboard");
+      // Navigate to OTP verification page with email in state
+      navigate("/verify", { state: { email, isSignUp: true } });
     } catch (error) {
       toast({
         title: "Error",
         description: "There was an error creating your account",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
