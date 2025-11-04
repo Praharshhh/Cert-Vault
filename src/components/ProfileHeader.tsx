@@ -1,8 +1,8 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Copy, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useMemo, useCallback } from "react";
 
 interface ProfileHeaderProps {
   username: string;
@@ -23,14 +23,24 @@ const ProfileHeader = ({
 }: ProfileHeaderProps) => {
   const { toast } = useToast();
   
-  const handleCopyLink = () => {
-    const profileUrl = `${window.location.origin}/profile/${username}`;
+  // Memoize the profile URL to avoid recalculating on every render
+  const profileUrl = useMemo(() => {
+    return `${window.location.origin}/profile/${username}`;
+  }, [username]);
+  
+  // Memoize initials extraction to avoid recalculating on every render
+  const initials = useMemo(() => {
+    return name.split(' ').map(n => n[0]).join('');
+  }, [name]);
+  
+  // Memoize the copy handler using useCallback to prevent recreation on every render
+  const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(profileUrl);
     toast({
       title: "Link copied!",
       description: "Profile link copied to clipboard",
     });
-  };
+  }, [profileUrl, toast]);
   
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -38,7 +48,7 @@ const ProfileHeader = ({
         <Avatar className="h-24 w-24 border-2 border-certVault-100">
           <AvatarImage src={avatarUrl} alt={name} />
           <AvatarFallback className="bg-certVault-100 text-certVault-800 text-xl">
-            {name.split(' ').map(n => n[0]).join('')}
+            {initials}
           </AvatarFallback>
         </Avatar>
         
@@ -62,23 +72,23 @@ const ProfileHeader = ({
         </div>
         
         <div className="flex flex-col gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-2"
             onClick={handleCopyLink}
           >
             <Copy size={14} />
-            <span>Copy Profile Link</span>
+            Copy Profile Link
           </Button>
           
-          <Button 
-            variant="secondary" 
-            size="sm" 
+          <Button
+            variant="secondary"
+            size="sm"
             className="flex items-center gap-2"
           >
             <LinkIcon size={14} />
-            <span>Share Profile</span>
+            Share Profile
           </Button>
         </div>
       </div>
